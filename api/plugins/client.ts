@@ -1,4 +1,5 @@
 import { type FetchOptions } from "ofetch";
+import ApiError from "~/composable/ApiError";
 
 const SECURE_METHODS = new Set(["post", "delete", "put", "patch"]);
 const UNAUTHENTICATED_STATUSES = new Set([401, 419]);
@@ -53,8 +54,28 @@ export default defineNuxtPlugin((nuxtApp) => {
       }
     },
 
-    onResponseError({ response }) {
-      // TODO
+    async onResponseError({ response }) {
+      if (
+        apiConfig.redirectUnauthenticated &&
+        UNAUTHENTICATED_STATUSES.has(response.status)
+      ) {
+        await navigateTo(config.public.loginUrl);
+
+        return;
+      }
+
+      if (
+        apiConfig.redirectUnverified &&
+        response.status === UNVERIFIED_USER_STATUS
+      ) {
+        await navigateTo(config.public.verificationUrl);
+
+        return;
+      }
+
+      if (response.status === VALIDATION_ERROR_STATUS) {
+        throw new ApiError(response._data);
+      }
     },
   };
 
