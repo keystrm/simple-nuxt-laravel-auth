@@ -33,7 +33,21 @@ export default defineNuxtPlugin((nuxtApp) => {
     },
 
     onResponse({ response }) {
-      // TODO
+      if (process.server) {
+        const rawCookiesHeader = response.headers.get(
+          apiConfig.serverCookieName
+        );
+
+        if (rawCookiesHeader === null) {
+          return;
+        }
+
+        const cookies = splitCookiesString(rawCookiesHeader);
+
+        for (const cookie of cookies) {
+          appendHeader(event, apiConfig.serverCookieName, cookie);
+        }
+      }
     },
 
     onResponseError({ response }) {
