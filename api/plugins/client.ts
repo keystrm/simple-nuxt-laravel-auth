@@ -1,6 +1,9 @@
 import { type FetchOptions } from "ofetch";
 
 const SECURE_METHODS = new Set(["post", "delete", "put", "patch"]);
+const UNAUTHENTICATED_STATUSES = new Set([401, 419]);
+const UNVERIFIED_USER_STATUS = 409;
+const VALIDATION_ERROR_STATUS = 422;
 
 export default defineNuxtPlugin((nuxtApp) => {
   const event = useRequestEvent();
