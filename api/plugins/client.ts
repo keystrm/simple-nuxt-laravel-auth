@@ -42,4 +42,16 @@ export default defineNuxtPlugin((nuxtApp) => {
     };
 
     const client: any = $fetch.create(httpOptions);
+
+    function buildServerHeaders(headers: HeadersInit | undefined): HeadersInit {
+        const csrfToken = useCookie(apiConfig.csrfCookieName).value;
+        const clientCookies = useRequestHeaders(['cookie']);
+    
+        return {
+            ...headers,
+            ...(clientCookies.cookie && clientCookies),
+            ...(csrfToken && { [apiConfig.csrfHeaderName]: csrfToken }),
+            Referer: config.public.baseUrl,
+        };
+    }
 });
