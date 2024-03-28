@@ -1,5 +1,7 @@
 import { type FetchOptions } from 'ofetch';
 
+const SECURE_METHODS = new Set(['post', 'delete', 'put', 'patch']);
+
 export default defineNuxtPlugin((nuxtApp) => {
     const event = useRequestEvent();
     const config = useRuntimeConfig();
@@ -14,8 +16,20 @@ export default defineNuxtPlugin((nuxtApp) => {
         },
         retry: false,
 
-        onRequest({ options }) {
-            // TODO
+        async onRequest({ options }) {
+            if (process.server) {
+                options.headers = buildServerHeaders(options.headers);
+            }
+        
+            if (process.client) {
+                const method = options.method?.toLocaleLowerCase() ?? '';
+        
+                if (!SECURE_METHODS.has(method)) {
+                    return;
+                }
+        
+                options.headers = await buildClientHeaders(options.headers);
+            }
         },
 
         onResponse({ response }) {
