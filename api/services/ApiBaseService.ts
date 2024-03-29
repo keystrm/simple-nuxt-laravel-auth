@@ -1,4 +1,4 @@
-import { $Fetch } from "ofetch";
+import { type $Fetch } from "ofetch";
 
 export abstract class ApiBaseService {
   private client: $Fetch;
