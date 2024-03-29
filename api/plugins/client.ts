@@ -1,5 +1,8 @@
 import { type FetchOptions } from "ofetch";
-import ApiError from "~/composable/ApiError";
+import ApiError from "../models/ApiError";
+import type { ApiServiceContainer } from "../services/ApiServiceContainer";
+import ApplicationService from "../services/ApplicationService";
+import AuthenticationService from "../services/AuthenticationService";
 
 const SECURE_METHODS = new Set(["post", "delete", "put", "patch"]);
 const UNAUTHENTICATED_STATUSES = new Set([401, 419]);
@@ -79,8 +82,6 @@ export default defineNuxtPlugin((nuxtApp) => {
     },
   };
 
-  const client: any = $fetch.create(httpOptions);
-
   function buildServerHeaders(headers: HeadersInit | undefined): HeadersInit {
     const csrfToken = useCookie(apiConfig.csrfCookieName).value;
     const clientCookies = useRequestHeaders(["cookie"]);
@@ -107,4 +108,11 @@ export default defineNuxtPlugin((nuxtApp) => {
       ...(csrfToken && { [apiConfig.csrfHeaderName]: csrfToken }),
     };
   }
+  const client: any = $fetch.create(httpOptions);
+
+  const api: ApiServiceContainer = {
+    application: new ApplicationService(client),
+    authentication: new AuthenticationService(client),
+  };
+
 });
