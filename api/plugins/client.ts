@@ -1,5 +1,6 @@
-import { type FetchOptions } from "ofetch";
+import { FetchError, type FetchOptions } from "ofetch";
 import ApiError from "../models/ApiError";
+import type User from "../models/User";
 import type { ApiServiceContainer } from "../services/ApiServiceContainer";
 import ApplicationService from "../services/ApplicationService";
 import AuthenticationService from "../services/AuthenticationService";
@@ -9,11 +10,25 @@ const UNAUTHENTICATED_STATUSES = new Set([401, 419]);
 const UNVERIFIED_USER_STATUS = 409;
 const VALIDATION_ERROR_STATUS = 422;
 
-export default defineNuxtPlugin((nuxtApp) => {
+export default defineNuxtPlugin(async (nuxtApp) => {
   const event = useRequestEvent();
   const config = useRuntimeConfig();
   const user = useUser();
   const apiConfig = config.public.api;
+
+  async function initUser(getter: () => Promise<User | null>) {
+    try {
+      user.value = await getter();
+    } catch (err) {
+      if (
+        err instanceof FetchError &&
+        err.response &&
+        UNAUTHENTICATED_STATUSES.has(err.response.status)
+      ) {
+        console.warn("[API initUser] User is not authenticated");
+      }
+    }
+  }
 
   const httpOptions: FetchOptions = {
     baseURL: apiConfig.baseUrl,
@@ -115,4 +130,9 @@ export default defineNuxtPlugin((nuxtApp) => {
     authentication: new AuthenticationService(client),
   };
 
+  if (process.server && user.value === null) {
+    await initUser(() => api.authentication.user());
+  }
+
+  return { provide: { api } };
 });
